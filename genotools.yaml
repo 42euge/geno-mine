@@ -1,0 +1,5 @@
+name: geno-mine
+version: "0.1.0"
+description: Session mining and finetuning dataset generation for the geno ecosystem
+requires:
+  - geno-tools

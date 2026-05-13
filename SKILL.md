@@ -1,0 +1,1 @@
+skills/geno-mine/SKILL.md
