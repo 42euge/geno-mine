@@ -156,6 +156,42 @@ def cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_backfill(args: argparse.Namespace) -> int:
+    """Retroactively generate traces from historical session transcripts."""
+    from geno_mine.backfill import backfill
+
+    since = None
+    if args.since:
+        if args.since.endswith("d"):
+            days = int(args.since[:-1])
+            since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        else:
+            since = args.since
+
+    print(f"scanning transcripts (since={since or 'all'}, skill={args.skill or 'all'})...")
+    result = backfill(since=since, skill=args.skill, dry_run=args.dry_run)
+
+    print(f"\n  transcripts scanned:  {result['transcripts_scanned']}")
+    print(f"  invocations found:    {result['invocations_found']}")
+    print(f"  traces emitted:       {result['traces_emitted']}")
+    print(f"  skipped (dedup):      {result.get('traces_skipped_dedup', 0)}")
+
+    if result.get("traces_by_skill"):
+        print("\n  by skill:")
+        for skill, count in sorted(result["traces_by_skill"].items(), key=lambda x: -x[1]):
+            print(f"    {skill:<40} {count}")
+
+    if result.get("traces_by_status"):
+        print("\n  by outcome:")
+        for status, count in sorted(result["traces_by_status"].items()):
+            print(f"    {status:<12} {count}")
+
+    if args.dry_run:
+        print("\n  (dry run — no traces written)")
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="geno-mine", description="Session mining and dataset generation")
     parser.add_argument("--version", action="version", version=f"geno-mine {__version__}")
@@ -178,6 +214,12 @@ def main(argv: list[str] | None = None) -> int:
     p_export.add_argument("--version", help="dataset version (default: latest)")
     p_export.add_argument("--output", "-o", help="output directory")
     p_export.set_defaults(func=cmd_export)
+
+    p_backfill = sub.add_parser("backfill", help="retroactively generate traces from historical transcripts")
+    p_backfill.add_argument("--since", help="time window (e.g. '30d', ISO timestamp)")
+    p_backfill.add_argument("--skill", help="filter to a specific skill")
+    p_backfill.add_argument("--dry-run", action="store_true", help="analyze without writing traces")
+    p_backfill.set_defaults(func=cmd_backfill)
 
     args = parser.parse_args(argv)
     return args.func(args)
