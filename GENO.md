@@ -40,6 +40,14 @@ geno-mine/
 geno-mine = "geno_mine.cli:main"
 ```
 
+## Conventions
+
+- Skill directories live under `skills/` and must contain a `SKILL.md` with valid frontmatter.
+- The `.geno/` directory and `CLAUDE.local.md` are never committed — they hold machine-local state.
+- **Prefix aliasing**: slash commands use the canonical `geno-` prefix in source (e.g., `/geno-mine-extract`). Short `gt-*` aliases are configured per-installation by `geno-tools` and are not defined in this repo. Always author skill names with the canonical `geno-` prefix.
+- **Adding a new skill**: create a directory under `skills/` named after the skill, write a `SKILL.md` with YAML frontmatter (`name`, `description`, `allowed-tools`, `license`, `metadata`), add a row to the Skills table above, and register it in `genotools.yaml`.
+- **Versioning**: bump the version in `genotools.yaml` (and `pyproject.toml` if present) whenever a skill is added, removed, or its behavior changes.
+
 ## Pipeline
 
 ```
